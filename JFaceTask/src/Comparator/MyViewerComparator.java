@@ -8,16 +8,14 @@ import entity.Student;
 
 public class MyViewerComparator extends ViewerComparator {
 
-
 	public MyViewerComparator() {
-		this.propertyIndex=0;
-		direction=DESCENDING;
+		this.propertyIndex = 0;
+		direction = DESCENDING;
 	}
-	
+
 	private int propertyIndex;
 	private static final int DESCENDING = 1;
 	private int direction = DESCENDING;
-
 
 	public int getDirection() {
 		return direction == 1 ? SWT.UP : SWT.DOWN;
@@ -25,10 +23,8 @@ public class MyViewerComparator extends ViewerComparator {
 
 	public void setColumn(int column) {
 		if (column == this.propertyIndex) {
-			// Same column as last sort; toggle the direction
 			direction = 1 - direction;
 		} else {
-			// New column; do an ascending sort
 			this.propertyIndex = column;
 			direction = DESCENDING;
 		}
@@ -41,7 +37,7 @@ public class MyViewerComparator extends ViewerComparator {
 		int rc = 0;
 		switch (propertyIndex) {
 		case 0:
-			rc=s1.getName().compareToIgnoreCase(s2.getName());
+			rc = s1.getName().compareToIgnoreCase(s2.getName());
 			break;
 		case 1:
 			rc = Integer.compare(s1.getGroup(), s2.getGroup());
@@ -55,7 +51,6 @@ public class MyViewerComparator extends ViewerComparator {
 		default:
 			rc = 0;
 		}
-		// If descending order, flip the direction
 		if (direction == DESCENDING) {
 			rc = -rc;
 		}

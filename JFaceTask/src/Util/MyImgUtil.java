@@ -18,7 +18,5 @@ public class MyImgUtil {
 			e.printStackTrace();
 		}
 		return null;
-		
 	}
-
 }
