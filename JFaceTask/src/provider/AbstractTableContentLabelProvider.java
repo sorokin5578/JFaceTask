@@ -1,4 +1,4 @@
-package Provider;
+package provider;
 
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;

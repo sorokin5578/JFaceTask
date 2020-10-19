@@ -1,4 +1,7 @@
-package EditingSupport;
+package editingSupport;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CheckboxCellEditor;
@@ -7,13 +10,18 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 
 import entity.Student;
+import observer.Observable;
+import observer.Observer;
 
-public class HomeWorkEdit extends EditingSupport {
+public class HomeWorkEdit extends EditingSupport implements Observable {
 	private final TableViewer viewer;
+	private boolean changed;
+	private List<Observer> observers = new ArrayList<>();
 
 	public HomeWorkEdit(TableViewer viewer) {
 		super(viewer);
 		this.viewer = viewer;
+		this.changed = false;
 	}
 
 	@Override
@@ -39,5 +47,24 @@ public class HomeWorkEdit extends EditingSupport {
 		Student student = (Student) element;
 		student.setHomeWorkDone((Boolean) value);
 		viewer.update(element, null);
+		changed = true;
+		notifyObserser();
+	}
+
+	@Override
+	public void addObserser(Observer o) {
+		observers.add(o);
+	}
+
+	@Override
+	public void removeObserser(Observer o) {
+		observers.remove(o);
+	}
+
+	@Override
+	public void notifyObserser() {
+		for (Observer observer : observers) {
+			observer.tableWasChanged(changed);
+		}
 	}
 }

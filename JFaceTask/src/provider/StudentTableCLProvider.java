@@ -1,4 +1,4 @@
-package Provider;
+package provider;
 
 import java.util.List;
 

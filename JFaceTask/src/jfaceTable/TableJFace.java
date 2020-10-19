@@ -2,6 +2,8 @@ package jfaceTable;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,11 +13,15 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.databinding.DataBindingContext;
+import org.eclipse.core.databinding.beans.BeansObservables;
+import org.eclipse.core.databinding.observable.value.IObservableValue;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.databinding.swt.SWTObservables;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ControlDecoration;
@@ -28,9 +34,6 @@ import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
-import org.eclipse.swt.events.ControlListener;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -49,16 +52,18 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 
-import Comparator.MyViewerComparator;
-import EditingSupport.GroupEdit;
-import EditingSupport.HomeWorkEdit;
-import EditingSupport.NameEdit;
-import Provider.StudentTableCLProvider;
-import Util.CSVReader;
-import Util.MyImgUtil;
+import comparator.MyViewerComparator;
+import editingSupport.GroupEdit;
+import editingSupport.HomeWorkEdit;
+import editingSupport.NameEdit;
 import entity.Student;
+import observer.Observer;
+import provider.StudentTableCLProvider;
+import util.CSVFileWriter;
+import util.CSVReader;
+import util.MyImgUtil;
 
-public class TableJFace extends ApplicationWindow {
+public class TableJFace extends ApplicationWindow implements Observer{
 
 	private static final Image CHECKED = MyImgUtil.getImage(null, "check6.png");
 	private static final Image UNCHECKED = MyImgUtil.getImage(null, "uncheck6.png");
@@ -142,7 +147,6 @@ public class TableJFace extends ApplicationWindow {
 	}
 
 	private void initTable(Composite composite) {
-
 		comparator = new MyViewerComparator();
 		StudentTableCLProvider studentTableCLProvider = new StudentTableCLProvider();
 
@@ -155,12 +159,6 @@ public class TableJFace extends ApplicationWindow {
 		table.setLinesVisible(true);
 		table.setHeaderVisible(true);
 		table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
-		table.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				changed=true;
-			}
-		});
 
 		//
 		// Name column
@@ -173,7 +171,7 @@ public class TableJFace extends ApplicationWindow {
 				return s.getName();
 			}
 		});
-		nameTableViewerColumn.setEditingSupport(new NameEdit(tableViewer));
+		nameTableViewerColumn.setEditingSupport(createNameEditSupport());
 		initNewColumn(nameTableViewerColumn, "Name", 0);
 
 		//
@@ -187,7 +185,7 @@ public class TableJFace extends ApplicationWindow {
 				return String.valueOf(s.getGroup());
 			}
 		});
-		groupTableViewerColumn.setEditingSupport(new GroupEdit(tableViewer));
+		groupTableViewerColumn.setEditingSupport(createGroupEditSupport());
 		initNewColumn(groupTableViewerColumn, "Group", 1);
 
 		//
@@ -195,7 +193,7 @@ public class TableJFace extends ApplicationWindow {
 		//
 		TableViewerColumn homeWorkTableViewerColumn = new TableViewerColumn(tableViewer, SWT.NONE);
 		homeWorkTableViewerColumn.setLabelProvider(new ColumnLabelProvider() {
-			
+
 			@Override
 			public String getText(Object element) {
 				return null;
@@ -210,9 +208,8 @@ public class TableJFace extends ApplicationWindow {
 				}
 			}
 		});
-		homeWorkTableViewerColumn.setEditingSupport(new HomeWorkEdit(tableViewer));
+		homeWorkTableViewerColumn.setEditingSupport(createHomeWorkEditSupport());
 		initNewColumn(homeWorkTableViewerColumn, "SWT Done", 2);
-
 
 		tableViewer.addDoubleClickListener(d -> {
 			IStructuredSelection selection = tableViewer.getStructuredSelection();
@@ -225,6 +222,7 @@ public class TableJFace extends ApplicationWindow {
 	}
 
 	private void initControlPanel(Composite composite) {
+
 		//
 		// Text half
 		//
@@ -289,6 +287,32 @@ public class TableJFace extends ApplicationWindow {
 		addButton = createNewButton(buttonComposite, "Add", "Add new student");
 		addButton.addSelectionListener(new CustomSelectionAdapterForAddButton());
 
+
+
+	}
+
+	private NameEdit createNameEditSupport() {
+		NameEdit nameEdit = new NameEdit(tableViewer);
+		nameEdit.addObserser(this);
+		return nameEdit;
+	}
+	
+	private GroupEdit createGroupEditSupport() {
+		GroupEdit groupEdit = new GroupEdit(tableViewer);
+		groupEdit.addObserser(this);
+		return groupEdit;
+	}
+	
+	private HomeWorkEdit createHomeWorkEditSupport() {
+		HomeWorkEdit homeWorkEdit = new HomeWorkEdit(tableViewer);
+		homeWorkEdit.addObserser(this);
+		return homeWorkEdit;
+	}
+
+	@Override
+	public void tableWasChanged(boolean changed) {
+		this.changed = changed;
+		
 	}
 
 	//
@@ -448,29 +472,8 @@ public class TableJFace extends ApplicationWindow {
 					if (path == null) {
 						path = UUID.randomUUID().toString() + ".csv";
 					}
-					try (FileWriter csvWriter = new FileWriter(path);) {
-						char coma = ',';
-						List<Student> students = (List<Student>) tableViewer.getInput();
-						csvWriter.append("Name");
-						csvWriter.append(",");
-						csvWriter.append("Group");
-						csvWriter.append(",");
-						csvWriter.append("SWTDone");
-						csvWriter.append("\n");
-						for (Student student : students) {
-							csvWriter.append(student.getName());
-							csvWriter.append(coma);
-							csvWriter.append(String.valueOf(student.getGroup()));
-							csvWriter.append(coma);
-							csvWriter.append(String.valueOf(student.isHomeWorkDone()));
-							csvWriter.append("\n");
-						}
-						File file = new File(path);
-						String filePath = file.getAbsolutePath();
-						MessageDialog.openInformation(getShell(), "Info", "Saving success.\nYour list in " + filePath);
+					if(CSVFileWriter.writeCSVInFile(path, tableViewer)) {
 						changed = false;
-					} catch (Exception e) {
-						createErrorDialog(e);
 					}
 				}
 			}
@@ -503,10 +506,9 @@ public class TableJFace extends ApplicationWindow {
 	}
 
 	private class CustomSelectionAdapterForAddButton implements SelectionListener {
-
 		@Override
 		public void widgetDefaultSelected(SelectionEvent arg0) {
-			// empty
+			//empty
 		}
 
 		@Override
