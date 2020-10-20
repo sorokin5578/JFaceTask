@@ -566,8 +566,10 @@ public class TableJFace extends ApplicationWindow implements Observer {
 			try {
 				customSelectionAdapterForSaveButton.setFilters(fileDialog);
 				path = fileDialog.open();
-				Set<Student> students = CSVReader.readStudentListFromCSV(path);
-				tableViewer.setInput(students);
+				if (path != null) {
+					Set<Student> students = CSVReader.readStudentListFromCSV(path);
+					tableViewer.setInput(students);
+				}
 			} catch (NumberFormatException | IOException e) {
 				createErrorDialog(e);
 			} catch (Exception e) {

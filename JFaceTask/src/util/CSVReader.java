@@ -9,6 +9,10 @@ import java.util.Set;
 import entity.Student;
 
 public class CSVReader {
+
+	private CSVReader() {
+	}
+
 	public static Set<Student> readStudentListFromCSV(String pathToCsv, String split)
 			throws IOException, NumberFormatException, Exception {
 		try (BufferedReader csvReader = new BufferedReader(new FileReader(pathToCsv))) {

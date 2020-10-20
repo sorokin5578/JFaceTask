@@ -1,5 +1,7 @@
 package entity;
 
+import java.util.Objects;
+
 public class Student {
 
 	private String name;
@@ -41,19 +43,16 @@ public class Student {
 		if (obj == this) {
 			return true;
 		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
+		if (obj instanceof Student) {
+			Student student = (Student) obj;
+			return getName().equals(student.getName()) && getGroup() == student.getGroup();
 		}
-		Student student = (Student) obj;
-		return getName().equals(student.getName()) && getGroup() == student.getGroup();
+		return false;
 	}
 
 	@Override
 	public int hashCode() {
-		int result = 7;
-		result += 37 * result + getGroup();
-		result += 37 * result + getName().hashCode();
-		return result;
+		return Objects.hash(getName(), getGroup());
 	}
 
 	@Override
