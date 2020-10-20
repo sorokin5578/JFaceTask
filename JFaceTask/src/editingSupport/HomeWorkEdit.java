@@ -15,13 +15,11 @@ import observer.Observer;
 
 public class HomeWorkEdit extends EditingSupport implements Observable {
 	private final TableViewer viewer;
-	private boolean changed;
 	private List<Observer> observers = new ArrayList<>();
 
 	public HomeWorkEdit(TableViewer viewer) {
 		super(viewer);
 		this.viewer = viewer;
-		this.changed = false;
 	}
 
 	@Override
@@ -47,7 +45,6 @@ public class HomeWorkEdit extends EditingSupport implements Observable {
 		Student student = (Student) element;
 		student.setHomeWorkDone((Boolean) value);
 		viewer.update(element, null);
-		changed = true;
 		notifyObserser();
 	}
 
@@ -64,7 +61,7 @@ public class HomeWorkEdit extends EditingSupport implements Observable {
 	@Override
 	public void notifyObserser() {
 		for (Observer observer : observers) {
-			observer.tableWasChanged(changed);
+			observer.tableWasChanged();
 		}
 	}
 }

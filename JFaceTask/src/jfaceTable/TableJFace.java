@@ -2,31 +2,22 @@ package jfaceTable;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.eclipse.core.databinding.DataBindingContext;
-import org.eclipse.core.databinding.beans.BeansObservables;
-import org.eclipse.core.databinding.observable.value.IObservableValue;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.databinding.swt.SWTObservables;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ControlDecoration;
 import org.eclipse.jface.fieldassist.FieldDecorationRegistry;
+import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.jface.viewers.ICheckStateProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
@@ -59,11 +50,12 @@ import editingSupport.NameEdit;
 import entity.Student;
 import observer.Observer;
 import provider.StudentTableCLProvider;
+import regExp.RegExp;
 import util.CSVFileWriter;
 import util.CSVReader;
 import util.MyImgUtil;
 
-public class TableJFace extends ApplicationWindow implements Observer{
+public class TableJFace extends ApplicationWindow implements Observer {
 
 	private static final Image CHECKED = MyImgUtil.getImage(null, "check6.png");
 	private static final Image UNCHECKED = MyImgUtil.getImage(null, "uncheck6.png");
@@ -135,6 +127,12 @@ public class TableJFace extends ApplicationWindow implements Observer{
 
 	@Override
 	public boolean close() {
+		if (path != null) {
+			String msg = "Wanna save your changes?";
+			if (changed && !MessageDialog.openConfirm(getShell(), "Confirm", msg)) {
+				return super.close();
+			}
+		}
 		new CustomSelectionAdapterForSaveButton().widgetSelected(null);
 		return super.close();
 	}
@@ -210,6 +208,7 @@ public class TableJFace extends ApplicationWindow implements Observer{
 		});
 		homeWorkTableViewerColumn.setEditingSupport(createHomeWorkEditSupport());
 		initNewColumn(homeWorkTableViewerColumn, "SWT Done", 2);
+		
 
 		tableViewer.addDoubleClickListener(d -> {
 			IStructuredSelection selection = tableViewer.getStructuredSelection();
@@ -287,8 +286,6 @@ public class TableJFace extends ApplicationWindow implements Observer{
 		addButton = createNewButton(buttonComposite, "Add", "Add new student");
 		addButton.addSelectionListener(new CustomSelectionAdapterForAddButton());
 
-
-
 	}
 
 	private NameEdit createNameEditSupport() {
@@ -296,13 +293,13 @@ public class TableJFace extends ApplicationWindow implements Observer{
 		nameEdit.addObserser(this);
 		return nameEdit;
 	}
-	
+
 	private GroupEdit createGroupEditSupport() {
 		GroupEdit groupEdit = new GroupEdit(tableViewer);
 		groupEdit.addObserser(this);
 		return groupEdit;
 	}
-	
+
 	private HomeWorkEdit createHomeWorkEditSupport() {
 		HomeWorkEdit homeWorkEdit = new HomeWorkEdit(tableViewer);
 		homeWorkEdit.addObserser(this);
@@ -310,9 +307,9 @@ public class TableJFace extends ApplicationWindow implements Observer{
 	}
 
 	@Override
-	public void tableWasChanged(boolean changed) {
-		this.changed = changed;
-		
+	public void tableWasChanged() {
+		this.changed = true;
+
 	}
 
 	//
@@ -350,21 +347,6 @@ public class TableJFace extends ApplicationWindow implements Observer{
 		column.setResizable(false);
 		column.setMoveable(false);
 		column.addSelectionListener(getSelectionAdapter(column, columnIndex));
-	}
-
-	private void createErrorDialog(Throwable t) {
-
-		List<Status> childStatuses = new ArrayList<>();
-		StackTraceElement[] stackTraces = Thread.currentThread().getStackTrace();
-
-		for (StackTraceElement stackTrace : stackTraces) {
-			Status status = new Status(IStatus.ERROR, "JFaceTask", stackTrace.toString());
-			childStatuses.add(status);
-		}
-		MultiStatus status = new MultiStatus("JFaceTask", IStatus.ERROR, childStatuses.toArray(new Status[] {}),
-				t.toString(), t);
-		ErrorDialog.openError(getShell(), "Error", "This is an error", status);
-
 	}
 
 	//
@@ -423,14 +405,10 @@ public class TableJFace extends ApplicationWindow implements Observer{
 		private boolean isInputDataValid(String input, String nameOfTextField) {
 			switch (nameOfTextField) {
 			case "Name":
-				Pattern namePattern = Pattern.compile("^[a-zA-Zа-яА-ЯёЁ]+$");
-				Matcher nameMatcher = namePattern.matcher(input);
-				nameFlag = nameMatcher.find();
+				nameFlag = RegExp.isNameValid(input);
 				return nameFlag;
 			case "Group":
-				Pattern groupPattern = Pattern.compile("^[1-9]+0*[0-9]*$");
-				Matcher groupMatcher = groupPattern.matcher(input);
-				groupFlag = groupMatcher.find();
+				groupFlag = RegExp.isGroupValid(input);
 				return groupFlag;
 			default:
 				return false;
@@ -467,16 +445,25 @@ public class TableJFace extends ApplicationWindow implements Observer{
 		@Override
 		public void widgetSelected(SelectionEvent arg0) {
 			if (changed) {
-				String msg = "Do you want to save current list to file?";
-				if (MessageDialog.openConfirm(getShell(), "Confirm", msg)) {
+				if (path == null) {
+					FileDialog dlg = new FileDialog(getShell(), SWT.SAVE);
+					setFilters(dlg);
+					path = dlg.open();
 					if (path == null) {
-						path = UUID.randomUUID().toString() + ".csv";
-					}
-					if(CSVFileWriter.writeCSVInFile(path, tableViewer)) {
-						changed = false;
+						return;
 					}
 				}
+				if (CSVFileWriter.writeCSVInFile(path, tableViewer)) {
+					changed = false;
+				}
 			}
+		}
+
+		public void setFilters(FileDialog dialog) {
+			String[] name = { "Файлы CSV (*.csv)" };
+			String[] extension = { "*.csv" };
+			dialog.setFilterNames(name);
+			dialog.setFilterExtensions(extension);
 		}
 	}
 
@@ -508,7 +495,7 @@ public class TableJFace extends ApplicationWindow implements Observer{
 	private class CustomSelectionAdapterForAddButton implements SelectionListener {
 		@Override
 		public void widgetDefaultSelected(SelectionEvent arg0) {
-			//empty
+			// empty
 		}
 
 		@Override
@@ -570,10 +557,11 @@ public class TableJFace extends ApplicationWindow implements Observer{
 
 		@Override
 		public void run() {
-			new CustomSelectionAdapterForSaveButton().widgetSelected(null);
-			MessageDialog.openInformation(getShell(), "Info", "Select new .csv file with list of students.");
+			CustomSelectionAdapterForSaveButton customSelectionAdapterForSaveButton = new CustomSelectionAdapterForSaveButton();
+			customSelectionAdapterForSaveButton.widgetSelected(null);
 			FileDialog fileDialog = new FileDialog(getShell());
 			try {
+				customSelectionAdapterForSaveButton.setFilters(fileDialog);
 				path = fileDialog.open();
 				List<Student> students = CSVReader.readStudentListFromCSV(path);
 				tableViewer.setInput(students);
@@ -582,6 +570,21 @@ public class TableJFace extends ApplicationWindow implements Observer{
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		}
+
+		private void createErrorDialog(Throwable t) {
+
+			List<Status> childStatuses = new ArrayList<>();
+			StackTraceElement[] stackTraces = Thread.currentThread().getStackTrace();
+
+			for (StackTraceElement stackTrace : stackTraces) {
+				Status status = new Status(IStatus.ERROR, "JFaceTask", stackTrace.toString());
+				childStatuses.add(status);
+			}
+			MultiStatus status = new MultiStatus("JFaceTask", IStatus.ERROR, childStatuses.toArray(new Status[] {}),
+					t.toString(), t);
+			ErrorDialog.openError(getShell(), "Error", "This is an error", status);
+
 		}
 	}
 

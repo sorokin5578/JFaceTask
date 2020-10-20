@@ -37,6 +37,26 @@ public class Student {
 	}
 
 	@Override
+	public boolean equals(Object obj) {
+		if (obj == this) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		Student student = (Student) obj;
+		return getName().equals(student.getName()) && getGroup() == student.getGroup();
+	}
+
+	@Override
+	public int hashCode() {
+		int result = 7;
+		result += 37 * result + getGroup();
+		result += 37 * result + getName().hashCode();
+		return result;
+	}
+
+	@Override
 	public String toString() {
 		String homeWork = isHomeWorkDone() ? "done" : "not done";
 		return "Name: " + getName() + ", Group: " + getGroup() + ", Home Work: " + homeWork;

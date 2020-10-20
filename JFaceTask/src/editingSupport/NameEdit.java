@@ -18,14 +18,12 @@ import observer.Observer;
 public class NameEdit extends EditingSupport implements Observable {
 	private final TableViewer viewer;
 	private final CellEditor editor;
-	private boolean changed;
 	private List<Observer> observers = new ArrayList<>();
 
 	public NameEdit(TableViewer viewer) {
 		super(viewer);
 		this.viewer = viewer;
 		this.editor = new TextCellEditor(viewer.getTable());
-		this.changed = false;
 	}
 
 	@Override
@@ -51,7 +49,6 @@ public class NameEdit extends EditingSupport implements Observable {
 		if (nameMatcher.find()) {
 			((Student) element).setName(String.valueOf(userInputValue));
 			viewer.update(element, null);
-			changed = true;
 			notifyObserser();
 		} else {
 			MessageDialog.openWarning(null, "Warning", "You must input a Name!");
@@ -71,7 +68,7 @@ public class NameEdit extends EditingSupport implements Observable {
 	@Override
 	public void notifyObserser() {
 		for (Observer observer : observers) {
-			observer.tableWasChanged(changed);
+			observer.tableWasChanged();
 		}
 	}
 }

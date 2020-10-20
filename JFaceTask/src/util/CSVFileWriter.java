@@ -1,22 +1,20 @@
 package util;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.TableViewer;
 
 import entity.Student;
-import observer.Observable;
-import observer.Observer;
 
 public class CSVFileWriter{
 	
 	public static boolean writeCSVInFile(String path, TableViewer tableViewer){
-		try (FileWriter csvWriter = new FileWriter(path);) {
+		try (BufferedWriter csvWriter = new BufferedWriter(new FileWriter(path))) {
 			char coma = ',';
 			List<Student> students = (List<Student>) tableViewer.getInput();
 			csvWriter.append("Name");

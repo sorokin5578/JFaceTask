@@ -18,14 +18,12 @@ import observer.Observer;
 public class GroupEdit extends EditingSupport implements Observable {
 	private final TableViewer viewer;
 	private final CellEditor editor;
-	private boolean changed;
 	private List<Observer> observers = new ArrayList<>();
 
 	public GroupEdit(TableViewer viewer) {
 		super(viewer);
 		this.viewer = viewer;
 		this.editor = new TextCellEditor(viewer.getTable());
-		this.changed = false;
 	}
 
 	@Override
@@ -51,7 +49,6 @@ public class GroupEdit extends EditingSupport implements Observable {
 		if (groupMatcher.find()) {
 			((Student) element).setGroup(Integer.parseInt((String) userInputValue));
 			viewer.update(element, null);
-			changed = true;
 			notifyObserser();
 		} else {
 			MessageDialog.openWarning(null, "Warning", "You must input a number!");
@@ -71,7 +68,7 @@ public class GroupEdit extends EditingSupport implements Observable {
 	@Override
 	public void notifyObserser() {
 		for (Observer observer : observers) {
-			observer.tableWasChanged(changed);
+			observer.tableWasChanged();
 		}
 	}
 }
