@@ -4,7 +4,9 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
@@ -15,9 +17,7 @@ import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ControlDecoration;
 import org.eclipse.jface.fieldassist.FieldDecorationRegistry;
-import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
-import org.eclipse.jface.viewers.ICheckStateProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
@@ -208,7 +208,6 @@ public class TableJFace extends ApplicationWindow implements Observer {
 		});
 		homeWorkTableViewerColumn.setEditingSupport(createHomeWorkEditSupport());
 		initNewColumn(homeWorkTableViewerColumn, "SWT Done", 2);
-		
 
 		tableViewer.addDoubleClickListener(d -> {
 			IStructuredSelection selection = tableViewer.getStructuredSelection();
@@ -428,7 +427,7 @@ public class TableJFace extends ApplicationWindow implements Observer {
 			String msg = "Do you want to create new list?";
 			if (MessageDialog.openConfirm(getShell(), "Confirm", msg)) {
 				new CustomSelectionAdapterForSaveButton().widgetSelected(null);
-				tableViewer.setInput(new ArrayList<>());
+				tableViewer.setInput(new HashSet<>());
 				path = null;
 				changed = false;
 			}
@@ -453,7 +452,7 @@ public class TableJFace extends ApplicationWindow implements Observer {
 						return;
 					}
 				}
-				if (CSVFileWriter.writeCSVInFile(path, tableViewer)) {
+				if (CSVFileWriter.writeCSVInFile(path, tableViewer.getInput())) {
 					changed = false;
 				}
 			}
@@ -480,7 +479,7 @@ public class TableJFace extends ApplicationWindow implements Observer {
 			if (studentForDelte != null) {
 				msg = "Please confirm deletion of the student: " + studentForDelte.toString();
 				if (MessageDialog.openConfirm(getShell(), "Confirm", msg)) {
-					List<Student> students = (List<Student>) tableViewer.getInput();
+					Set<Student> students = (Set<Student>) tableViewer.getInput();
 					students.remove(studentForDelte);
 					tableViewer.refresh();
 					changed = true;
@@ -506,12 +505,16 @@ public class TableJFace extends ApplicationWindow implements Observer {
 						homeWorkButton.getSelection());
 				String msg = "Please confirm saving the student: " + student.toString();
 				if (MessageDialog.openConfirm(getShell(), "Confirm", msg)) {
-					List<Student> inputList = (List<Student>) tableViewer.getInput();
+					Set<Student> inputList = (Set<Student>) tableViewer.getInput();
 					if (inputList != null) {
+						if (inputList.contains(student)) {
+							MessageDialog.openWarning(null, "Warning", "Such student already exists!");
+							return;
+						}
 						inputList.add(student);
 					} else {
-						tableViewer.setInput(new ArrayList<>());
-						inputList = (List<Student>) tableViewer.getInput();
+						tableViewer.setInput(new HashSet<>());
+						inputList = (Set<Student>) tableViewer.getInput();
 						inputList.add(student);
 					}
 					tableViewer.refresh();
@@ -563,7 +566,7 @@ public class TableJFace extends ApplicationWindow implements Observer {
 			try {
 				customSelectionAdapterForSaveButton.setFilters(fileDialog);
 				path = fileDialog.open();
-				List<Student> students = CSVReader.readStudentListFromCSV(path);
+				Set<Student> students = CSVReader.readStudentListFromCSV(path);
 				tableViewer.setInput(students);
 			} catch (NumberFormatException | IOException e) {
 				createErrorDialog(e);

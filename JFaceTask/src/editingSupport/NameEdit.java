@@ -2,8 +2,6 @@ package editingSupport;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
@@ -14,6 +12,7 @@ import org.eclipse.jface.viewers.TextCellEditor;
 import entity.Student;
 import observer.Observable;
 import observer.Observer;
+import regExp.RegExp;
 
 public class NameEdit extends EditingSupport implements Observable {
 	private final TableViewer viewer;
@@ -44,9 +43,7 @@ public class NameEdit extends EditingSupport implements Observable {
 	@Override
 	protected void setValue(Object element, Object userInputValue) {
 		String input = (String) userInputValue;
-		Pattern namePattern = Pattern.compile("^[a-zA-Zа-яА-ЯёЁ]+$");
-		Matcher nameMatcher = namePattern.matcher(input);
-		if (nameMatcher.find()) {
+		if (RegExp.isNameValid(input)) {
 			((Student) element).setName(String.valueOf(userInputValue));
 			viewer.update(element, null);
 			notifyObserser();

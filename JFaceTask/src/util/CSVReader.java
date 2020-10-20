@@ -1,22 +1,19 @@
 package util;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.DefaultRowSorter;
+import java.util.HashSet;
+import java.util.Set;
 
 import entity.Student;
 
 public class CSVReader {
-	public static List<Student> readStudentListFromCSV(String pathToCsv, String split)
+	public static Set<Student> readStudentListFromCSV(String pathToCsv, String split)
 			throws IOException, NumberFormatException, Exception {
 		try (BufferedReader csvReader = new BufferedReader(new FileReader(pathToCsv))) {
 			String row;
-			List<Student> students = new ArrayList<>();
+			Set<Student> students = new HashSet<>();
 			boolean flag = true;
 			while ((row = csvReader.readLine()) != null) {
 				if (flag) {
@@ -35,7 +32,7 @@ public class CSVReader {
 		}
 	}
 
-	public static List<Student> readStudentListFromCSV(String pathToCsv)
+	public static Set<Student> readStudentListFromCSV(String pathToCsv)
 			throws NumberFormatException, IOException, Exception {
 		return readStudentListFromCSV(pathToCsv, ",");
 	}

@@ -1,19 +1,13 @@
 package provider;
 
-import java.util.List;
-
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.resource.LocalResourceManager;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.Display;
+import java.util.Set;
 
 import entity.Student;
 
 public class StudentTableCLProvider extends AbstractTableContentLabelProvider {
 	@Override
 	public Object[] getElements(Object input) {
-		List<Student> list = (List<Student>) input;
+		Set<Student> list = (Set<Student>) input;
 		return list.toArray();
 	}
 }

@@ -2,8 +2,6 @@ package editingSupport;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
@@ -14,6 +12,7 @@ import org.eclipse.jface.viewers.TextCellEditor;
 import entity.Student;
 import observer.Observable;
 import observer.Observer;
+import regExp.RegExp;
 
 public class GroupEdit extends EditingSupport implements Observable {
 	private final TableViewer viewer;
@@ -44,10 +43,8 @@ public class GroupEdit extends EditingSupport implements Observable {
 	@Override
 	protected void setValue(Object element, Object userInputValue) {
 		String input = (String) userInputValue;
-		Pattern groupPattern = Pattern.compile("^[1-9]+0*[0-9]*$");
-		Matcher groupMatcher = groupPattern.matcher(input);
-		if (groupMatcher.find()) {
-			((Student) element).setGroup(Integer.parseInt((String) userInputValue));
+		if (RegExp.isGroupValid(input)) {
+			((Student) element).setGroup(Integer.parseInt(input));
 			viewer.update(element, null);
 			notifyObserser();
 		} else {

@@ -4,19 +4,18 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.viewers.TableViewer;
 
 import entity.Student;
 
-public class CSVFileWriter{
-	
-	public static boolean writeCSVInFile(String path, TableViewer tableViewer){
+public class CSVFileWriter {
+
+	public static boolean writeCSVInFile(String path, Object object) {
 		try (BufferedWriter csvWriter = new BufferedWriter(new FileWriter(path))) {
 			char coma = ',';
-			List<Student> students = (List<Student>) tableViewer.getInput();
+			Set<Student> students = (Set<Student>) object;
 			csvWriter.append("Name");
 			csvWriter.append(",");
 			csvWriter.append("Group");

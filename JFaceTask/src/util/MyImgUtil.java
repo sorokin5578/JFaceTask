@@ -1,10 +1,5 @@
 package util;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 
