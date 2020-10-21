@@ -1,5 +1,8 @@
 package main;
 
+import java.io.File;
+import java.util.Arrays;
+
 import org.eclipse.swt.widgets.Display;
 
 import jfaceTable.TableJFace;
@@ -11,5 +14,6 @@ public class Main {
 		table.setBlockOnOpen(true);
 		table.open();
 		Display.getCurrent().dispose();
+
 	}
 }
